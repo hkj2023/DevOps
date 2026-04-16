@@ -7,7 +7,8 @@ on:
 
 jobs:
   defect-prediction:
-    runs-on: windows-latest   # ✅ Use Windows runner
+    runs-on: windows-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -15,16 +16,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'   # ✅ Match your local Python version
+          python-version: '3.10'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run defect prediction
-        run: |
-          python RF_JSON.py
-        # This generates defect_predictions.json
+        run: python RF_JSON.py
 
       - name: Upload predictions artifact
         uses: actions/upload-artifact@v3
@@ -32,9 +33,11 @@ jobs:
           name: defect_predictions
           path: defect_predictions.json
 
+
   orchestration:
-    runs-on: windows-latest   # ✅ Also run orchestration on Windows
+    runs-on: windows-latest
     needs: defect-prediction
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -42,13 +45,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: '3.10'
 
       - name: Download predictions artifact
         uses: actions/download-artifact@v3
         with:
           name: defect_predictions
+          path: .
+
+      - name: Show files (DEBUG STEP)
+        run: dir
 
       - name: Run orchestration layer
-        run: |
-          python orchestrator.py
+        run: python orchestrator.py
