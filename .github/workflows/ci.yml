@@ -1,0 +1,55 @@
+name: ML-Orchestrated CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  defect-prediction:
+    runs-on: windows-latest   # ✅ Use Windows runner
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'   # ✅ Match your local Python version
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run defect prediction
+        run: |
+          python RF_JSON.py
+        # This generates defect_predictions.json
+
+      - name: Upload predictions artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: defect_predictions
+          path: defect_predictions.json
+
+  orchestration:
+    runs-on: windows-latest   # ✅ Also run orchestration on Windows
+    needs: defect-prediction
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Download predictions artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: defect_predictions
+
+      - name: Run orchestration layer
+        run: |
+          python orchestrator.py
+
